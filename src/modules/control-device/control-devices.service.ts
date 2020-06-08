@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Injectable, BadRequestException } from '@nestjs/common';
-import {
-  ControlDeviceDto,
-  ControlDeviceCreateDto,
-} from './dtos/control-device.dto';
+import { ControlDeviceCreateDto } from './dtos/control-device.dto';
 import { MqttService } from 'src/shared/modules/mqtt/mqtt.service';
 import { firebase } from '../../firebase';
 import { uuid } from 'uuidv4';
+import { PUBLISH_TOPIC } from 'src/environments';
 
 @Injectable()
 export class ControlDeviceService {
@@ -44,19 +42,31 @@ export class ControlDeviceService {
     });
   }
 
-  async update(id: string, args: ControlDeviceDto) {
+  async update(id: string, args) {
     const { status, level } = args;
 
-    //TODO: publish data to T_1 
-
-    const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('control');
-    const device = await this.getByIdWithUUID(id);
-    deviceRef.child(device[0]).set({
+    //TODO: publish data to T_1
+    const client = this.mqttService.client;
+    client.publish(PUBLISH_TOPIC, {
       id,
       status,
       level,
     });
+
+    const ref = firebase.app().database().ref();
+    const deviceRef = ref.child('device').child('control');
+    const [path, device] = await this.getByIdWithUUID(id);
+    device.level = level;
+    device.status = status;
+    if (!device.history) {
+      device.history = {};
+    }
+    device.history[`${Date.now()}`] = level;
+    const keyHistory = Object.keys(device.history);
+    if (keyHistory.length > 100) {
+      delete device.history[keyHistory[0]];
+    }
+    deviceRef.child(path).set(device);
     return args;
   }
 
