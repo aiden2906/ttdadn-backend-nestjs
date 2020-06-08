@@ -1,61 +1,62 @@
 import { Controller } from '@nestjs/common';
 import { MqttService } from './shared/modules/mqtt/mqtt.service';
-import { Fan, Sensor } from './shared/devices';
-import {
-  generateValueSensor,
-  conditionFan,
-  extractorFan,
-} from './shared/utils/utils';
-import dotenv = require('dotenv');
 import { AppGateway } from './app.gateway';
-dotenv.config();
-const SUBSCRIBE_TOPIC = process.env.SUBSCRIBE_TOPIC;
-const PUBLISH_TOPIC = process.env.PUBLISH_TOPIC;
-const APP_ID = process.env.APP_ID;
-const USERNAME = process.env.USERNAME;
-const PASSWORD = process.env.PASSWORD;
-const TIME_CHANGE = process.env.TIME_CHANGE;
-const TIME_SEND = process.env.TIME_SEND;
+import {
+  SUBSCRIBE_TOPIC,
+  APP_ID,
+  USERNAME,
+  PASSWORD,
+} from './environments';
+import { firebase } from './firebase';
+import { ControlDeviceService } from './modules/control-device/control-devices.service';
+import { SensorDeviceService } from './modules/sensor-device/sensor-device.service';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly mqttService: MqttService,
     private readonly gateway: AppGateway,
+    private readonly controlDeviceService: ControlDeviceService,
+    private readonly sensorDeviceService: SensorDeviceService,
   ) {}
   async onModuleInit(): Promise<void> {
-    // connect to broker
-    await this.mqttService.connect(APP_ID, USERNAME, PASSWORD, SUBSCRIBE_TOPIC);
 
-    //initial sensor
-    const sensor = new Sensor(1);
-    sensor.on('change', (data) => {
-      this.gateway.wss.emit('sensorChange', data);
-    });
-    await this.mqttService.faker([sensor], generateValueSensor, TIME_CHANGE);
-    await this.mqttService.publish(
-      this.mqttService.broker,
-      PUBLISH_TOPIC,
-      [sensor],
-      TIME_SEND,
-    );
+    console.log('appControllerRunning');
+    await this.mqttService.connect(APP_ID, USERNAME, PASSWORD, SUBSCRIBE_TOPIC); //topic1
 
-    //initial fan
-    const fan = new Fan(1);
-    fan.on('change', (data) => {
-      this.gateway.wss.emit('fanChange', data);
+    const ref = firebase.app().database().ref();
+    const sensorDeviceRef = ref.child('device').child('sensor');
+    const controlDeviceRef = ref.child('device').child('control');
+    sensorDeviceRef.on('value', (snapshot) => {
+      const devices = Object.entries(snapshot.val()).map(item=>item[1])
+      this.gateway.wss.emit('sensorChange', devices)
     });
-    await this.mqttService.publish(
-      this.mqttService.broker,
-      PUBLISH_TOPIC,
-      [fan],
-      TIME_SEND,
-    );
-    await this.mqttService.subscribe(
-      this.mqttService.broker,
-      [fan],
-      conditionFan,
-      extractorFan,
-    );
+    controlDeviceRef.on('value', (snapshot) => {
+      const devices = Object.entries(snapshot.val()).map(item=>item[1])
+      this.gateway.wss.emit('sensorChange', devices)
+    });
+
+    this.mqttService.client.on('message', async (topic, message) => {
+      //sensor id1,  fan id2
+      const { id, value } = JSON.parse(message);
+      const [status, level] = value;
+      console.log(`${topic} : ${message}`);
+      const check = String(message).match(/id1/);
+      if (check) {
+        const [path, sensor] = await this.sensorDeviceService.getByIdWithUUID(
+          id,
+        );
+        sensor.status = status ? Number(status) : sensor.status;
+        sensor.level = level ? Number(level) : sensor.level;
+        sensorDeviceRef.child(path).set(sensor);
+      } else {
+        const [path, control] = await this.controlDeviceService.getByIdWithUUID(
+          id,
+        );
+        control.status = status ? status : control.status;
+        control.level = level ? level : control.level;
+        controlDeviceRef.child(path).set(control);
+      }
+    });
   }
 }

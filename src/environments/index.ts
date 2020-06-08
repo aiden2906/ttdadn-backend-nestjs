@@ -1,0 +1,30 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
+const FIREBASE_AUTH_DOMAIN = process.env.FIREBASE_AUTH_DOMAIN;
+const FIREBASE_DATABASE_URL = process.env.FIREBASE_DATABASE_URL;
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+const MQTT_SERVER_URL = process.env.MQTT_SERVER_URL;
+const SUBSCRIBE_TOPIC = process.env.SUBSCRIBE_TOPIC;
+const PUBLISH_TOPIC = process.env.PUBLISH_TOPIC;
+const APP_ID = process.env.APP_ID;
+const PASSWORD = process.env.PASSWORD;
+const USERNAME = process.env.USERNAME;
+const TIME_CHANGE = process.env.TIME_CHANGE;
+const TIME_SEND = process.env.TIME_SEND;
+
+export {
+  FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_DATABASE_URL,
+  FIREBASE_PROJECT_ID,
+  MQTT_SERVER_URL,
+  SUBSCRIBE_TOPIC,
+  PUBLISH_TOPIC,
+  APP_ID,
+  PASSWORD,
+  USERNAME,
+  TIME_CHANGE,
+  TIME_SEND
+};

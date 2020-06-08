@@ -9,36 +9,36 @@ const URL = process.env.MQTT_SERVER_URL;
 export class MqttService {
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 
-  broker = null;
+  client = null;
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   async connect(clientId, username, password, topic) {
-    this.broker = mqtt.connect(URL, {
+    this.client = mqtt.connect(URL, {
       clientId,
       username,
       password,
     });
-    this.broker.subscribe(topic, (err) => {
+    this.client.subscribe(topic, (err) => {
       if (err) {
         Logger.error(err.message);
       }
     });
-    return this.broker;
+    return this.client;
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  async publish(broker, topic, devices, time) {
+  async publish(client, topic, devices, time) {
     for (const device of devices) {
       setInterval(() => {
         const message = device.toJSON();
         const payload = Buffer.from(JSON.stringify(message));
-        broker.publish(topic, payload);
+        client.publish(topic, payload);
       }, time);
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  async subscribe(broker, devices, condition, extractor) {
-    broker.on('message', (topic, message) => {
+  async subscribe(client, devices, condition, extractor) {
+    client.on('message', (topic, message) => {
       try {
         const payload = JSON.parse(message.toString());
         const id = condition(payload, topic);
