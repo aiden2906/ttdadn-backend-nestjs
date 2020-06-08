@@ -42,12 +42,18 @@ export class SensorDeviceService {
     const { status, level } = args;
     const ref = firebase.app().database().ref();
     const deviceRef = ref.child('device').child('sensor');
-    const device = await this.getByIdWithUUID(id);
-    deviceRef.child(device[0]).set({
-      id,
-      status,
-      level,
-    });
+    const [path, device] = await this.getByIdWithUUID(id);
+    device.level = level;
+    device.status = status;
+    if (!device.history) {
+      device.history = {};
+    }
+    device.history[`${Date.now()}`] = level;
+    const keyHistory = Object.keys(device.history);
+    if (keyHistory.length > 100) {
+      delete device.history[keyHistory[0]];
+    }
+    deviceRef.child(path).set(device);
     return args;
   }
 
