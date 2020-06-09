@@ -13,6 +13,8 @@ const PASSWORD = process.env.PASSWORD;
 const USERNAME = process.env.USERNAME;
 const TIME_CHANGE = process.env.TIME_CHANGE;
 const TIME_SEND = process.env.TIME_SEND;
+const SALTROUNDS = process.env.SALTROUNDS;
+const SECRETKEY = process.env.SECRETKEY;
 
 export {
   FIREBASE_API_KEY,
@@ -26,5 +28,7 @@ export {
   PASSWORD,
   USERNAME,
   TIME_CHANGE,
-  TIME_SEND
+  TIME_SEND,
+  SALTROUNDS,
+  SECRETKEY,
 };
