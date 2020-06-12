@@ -11,7 +11,7 @@ import {
 import { SensorDeviceService } from './sensor-device.service';
 
 @Controller('sensor')
-export class SensorController {
+export class SensorDeviceController {
   constructor(private readonly sensorDeviceService: SensorDeviceService) {}
 
   @Get()

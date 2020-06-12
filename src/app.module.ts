@@ -9,10 +9,23 @@ import { SensorDeviceModule } from './modules/sensor-device/sensor-device.module
 import { SensorDeviceService } from './modules/sensor-device/sensor-device.service';
 import { ControlDeviceService } from './modules/control-device/control-devices.service';
 import { UserModule } from './modules/user/user.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
-  imports: [MqttModule, ConfigModule, ControlDeviceModule, SensorDeviceModule, UserModule],
+  imports: [
+    MqttModule,
+    ConfigModule,
+    ControlDeviceModule,
+    SensorDeviceModule,
+    UserModule,
+    NotificationModule,
+  ],
   controllers: [AppController],
-  providers: [AppService, AppGateway, ControlDeviceService, SensorDeviceService],
+  providers: [
+    AppService,
+    AppGateway,
+    ControlDeviceService,
+    SensorDeviceService,
+  ],
 })
 export class AppModule {}

@@ -7,5 +7,6 @@ import { MqttModule } from 'src/shared/modules/mqtt/mqtt.module';
   imports: [MqttModule],
   controllers: [ControlDeviceController],
   providers: [ControlDeviceService],
+  exports: [ControlDeviceService],
 })
 export class ControlDeviceModule {}
