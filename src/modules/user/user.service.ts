@@ -91,7 +91,7 @@ export class UserService {
   async login(args) {
     const { username, password } = args;
     const user = await this.getByUsername(username);
-    const check = bcrypt.compareSync(password, user.password);
+    const check = bcrypt.compareSync(String(password), String(user.password));
     if (!check) {
       throw new BadRequestException('incorrect password');
     }

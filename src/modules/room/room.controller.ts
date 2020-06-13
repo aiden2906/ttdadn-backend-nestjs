@@ -1,7 +1,7 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { RoomService } from './room.service';
 
-@Controller()
+@Controller('room')
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 

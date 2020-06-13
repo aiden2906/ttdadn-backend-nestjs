@@ -45,6 +45,7 @@ export class UserController {
 
   @Post('login')
   async login(@Body() args) {
+    console.log(args);
     return this.userService.login(args);
   }
 
