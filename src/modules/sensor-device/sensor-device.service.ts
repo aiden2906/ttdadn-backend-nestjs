@@ -27,28 +27,32 @@ export class SensorDeviceService {
   }
 
   async create(args) {
-    const { id, status, level } = args;
+    const { id, temp, humi } = args;
     const ref = firebase.app().database().ref();
     const deviceRef = ref.child('device').child('sensor');
     const path = uuid();
     deviceRef.child(path).set({
       id,
-      status,
-      level,
+      temp,
+      humi,
     });
   }
 
   async update(id: string, args) {
-    const { status, level } = args;
+    const { temp, humi } = args;
     const ref = firebase.app().database().ref();
     const deviceRef = ref.child('device').child('sensor');
+    const x = await this.getByIdWithUUID(id);
+    if (!x){
+      await this.create({id, temp, humi});
+    }
     const [path, device] = await this.getByIdWithUUID(id);
-    device.level = level;
-    device.status = status;
+    device.humi = humi;
+    device.temp = temp;
     if (!device.history) {
       device.history = {};
     }
-    device.history[`${Date.now()}`] = level;
+    device.history[`${Date.now()}`] = {temp,humi};
     const keyHistory = Object.keys(device.history);
     if (keyHistory.length > 100) {
       delete device.history[keyHistory[0]];

@@ -7,6 +7,7 @@ import {
   Body,
   Put,
   Delete,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 
@@ -52,5 +53,10 @@ export class UserController {
   @Post('forget-password')
   async forgotPassword(@Body() args) {
     return this.userService.forgotPassword(args);
+  }
+
+  @Post('test')
+  async test(@Req() req){
+    return req.user;
   }
 }

@@ -138,4 +138,14 @@ export class UserService {
     }
     await this.update({ username, password: newPassword });
   }
+
+
+  async getByName(username:string){
+    const users = await this.list();
+    const user = users.find(item=>item.username === username)
+    if (!user){
+      throw new NotFoundException('not found user');
+    }
+    return user;
+  }
 }
