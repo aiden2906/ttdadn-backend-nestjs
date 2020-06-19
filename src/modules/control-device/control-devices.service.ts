@@ -43,18 +43,24 @@ export class ControlDeviceService {
   }
 
   async update(id: string, args) {
+    console.log(id);
+    console.log(args);
     const { status, level } = args;
     const client = this.mqttService.client;
+
+    //change device
     const payload = {
       device_id: 'LightD',
       values: [`${status}`, `${level}`],
     };
     const payloadJSON = JSON.stringify([payload]);
     client.publish(PUBLISH_TOPIC, payloadJSON);
-
+    //change database
     const ref = firebase.app().database().ref();
     const deviceRef = ref.child('device').child('control');
     const [path, device] = await this.getByIdWithUUID(id);
+
+    
     device.level = level;
     device.status = status;
     if (!device.history) {

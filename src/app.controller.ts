@@ -27,7 +27,7 @@ export class AppController {
     });
     controlDeviceRef.on('value', (snapshot) => {
       const devices = Object.entries(snapshot.val()).map((item) => item[1]);
-      this.gateway.wss.emit('sensorChange', devices);
+      this.gateway.wss.emit('controlChange', devices);
     });
 
     this.mqttService.client.on('message', async (topic, message) => {
