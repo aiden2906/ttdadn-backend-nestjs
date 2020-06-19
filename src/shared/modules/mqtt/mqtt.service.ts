@@ -17,6 +17,9 @@ export class MqttService {
       username,
       password,
     });
+    this.client.on('error', (err) => {
+      console.log(err);
+    });
     this.client.subscribe(topic, (err) => {
       if (err) {
         Logger.error(err.message);
@@ -52,15 +55,14 @@ export class MqttService {
     });
   }
 
-
   //temp
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  async faker(devices, generate, time){
+  async faker(devices, generate, time) {
     devices = [...devices];
     return setInterval(() => {
-        for (const device of devices){
-            device.setValue(...generate());
-        }
+      for (const device of devices) {
+        device.setValue(...generate());
+      }
     }, time);
-}
+  }
 }

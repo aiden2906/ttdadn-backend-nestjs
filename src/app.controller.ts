@@ -32,11 +32,12 @@ export class AppController {
 
     this.mqttService.client.on('message', async (topic, message) => {
       //sensor id1,  fan id2
+      console.log(`${topic} : ${message}`);
       const valueMessage = JSON.parse(message.toString());
-      const {device_id, values} = valueMessage[0];
+      const { device_id, values } = valueMessage[0];
       console.log(values);
       const [temp, humi] = values;
-      this.sensorDeviceService.update(device_id, {temp, humi});
+      this.sensorDeviceService.update(device_id, { temp, humi });
     });
   }
 }

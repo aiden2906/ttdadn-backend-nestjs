@@ -45,7 +45,7 @@ export class UserService {
     const userId = uuid();
     const hash = bcrypt.hashSync(password, Number(SALTROUNDS));
     const user = {
-      userId,
+      id: userId,
       fullname,
       username,
       password: hash,
@@ -72,7 +72,7 @@ export class UserService {
       : user.password;
     user.email = email ? email : user.email;
     user.dateOfBirth = dateOfBirth ? dateOfBirth : user.dateOfBirth;
-    const userId = user.userId;
+    const userId = user.id;
     const ref = firebase.app().database().ref();
     const userRef = ref.child('user');
     await userRef.child(userId).set(user);
@@ -127,23 +127,25 @@ export class UserService {
   }
 
   async resetPassword(args) {
-    const { username, newPassword, token } = args;
+    const { newPassword, token } = args;
     const payload = jwt.verify(token, SECRETKEY);
+    const { username, password } = payload;
     const user = await this.getByUsername(username);
-    if (
-      user.username !== payload.username ||
-      user.password !== payload.password
-    ) {
+
+    if (user.username !== username || user.password !== password) {
       throw new BadRequestException('incorrect token');
     }
-    await this.update({ username, password: newPassword });
+    user.password = bcrypt.hashSync(newPassword, Number(SALTROUNDS));
+    console.log(user);
+    const ref = firebase.app().database().ref();
+    const userRef = ref.child('user');
+    userRef.child(user.id).set(user);
   }
 
-
-  async getByName(username:string){
+  async getByName(username: string) {
     const users = await this.list();
-    const user = users.find(item=>item.username === username)
-    if (!user){
+    const user = users.find((item) => item.username === username);
+    if (!user) {
       throw new NotFoundException('not found user');
     }
     return user;

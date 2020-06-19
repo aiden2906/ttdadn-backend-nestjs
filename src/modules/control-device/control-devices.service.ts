@@ -44,14 +44,13 @@ export class ControlDeviceService {
 
   async update(id: string, args) {
     const { status, level } = args;
-
-    //TODO: publish data to T_1
     const client = this.mqttService.client;
-    client.publish(PUBLISH_TOPIC, {
-      id,
-      status,
-      level,
-    });
+    const payload = {
+      device_id: 'LightD',
+      values: [`${status}`, `${level}`],
+    };
+    const payloadJSON = JSON.stringify([payload]);
+    client.publish(PUBLISH_TOPIC, payloadJSON);
 
     const ref = firebase.app().database().ref();
     const deviceRef = ref.child('device').child('control');
@@ -61,7 +60,7 @@ export class ControlDeviceService {
     if (!device.history) {
       device.history = {};
     }
-    device.history[`${Date.now()}`] = level;
+    device.history[`${Date.now()}`] = { status, level };
     const keyHistory = Object.keys(device.history);
     if (keyHistory.length > 100) {
       delete device.history[keyHistory[0]];

@@ -8,15 +8,25 @@ import {
   Put,
   Delete,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { ACGuard } from 'nest-access-control';
+import { AuthGuard } from '@nestjs/passport';
+import { from } from 'rxjs';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
   @Get()
+  @UseGuards(AuthGuard('local'))
   async list() {
     return this.userService.list();
+  }
+
+  @Post()
+  async create(@Body() args) {
+    return this.userService.create(args);
   }
 
   @Post('reset-password')
@@ -25,21 +35,19 @@ export class UserController {
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('local'))
   async get(@Param('id') id: string) {
     return this.userService.get(id);
   }
 
-  @Post('create')
-  async create(@Body() args) {
-    return this.userService.create(args);
-  }
-
   @Put()
+  @UseGuards(AuthGuard('local'))
   async update(@Body() args) {
     return this.userService.update(args);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('local'))
   async delete(@Param('id') id: string) {
     return this.userService.delete(id);
   }
@@ -56,7 +64,8 @@ export class UserController {
   }
 
   @Post('test')
-  async test(@Req() req){
+  // @UseGuards(AuthGuard(), ACGuard)
+  async test(@Req() req) {
     return req.user;
   }
 }

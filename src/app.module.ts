@@ -10,6 +10,7 @@ import { SensorDeviceService } from './modules/sensor-device/sensor-device.servi
 import { ControlDeviceService } from './modules/control-device/control-devices.service';
 import { UserModule } from './modules/user/user.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { AuthModule } from './shared/auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     SensorDeviceModule,
     UserModule,
     NotificationModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [

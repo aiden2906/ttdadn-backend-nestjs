@@ -10,11 +10,13 @@ const SUBSCRIBE_TOPIC = process.env.SUBSCRIBE_TOPIC;
 const PUBLISH_TOPIC = process.env.PUBLISH_TOPIC;
 const APP_ID = process.env.APP_ID;
 const PASSWORD = process.env.PASSWORD;
-const USERNAME = process.env.USERNAME;
+const USERNAME = process.env.USERNAME_BR;
 const TIME_CHANGE = process.env.TIME_CHANGE;
 const TIME_SEND = process.env.TIME_SEND;
 const SALTROUNDS = process.env.SALTROUNDS;
 const SECRETKEY = process.env.SECRETKEY;
+
+console.log(SUBSCRIBE_TOPIC, PUBLISH_TOPIC)
 
 export {
   FIREBASE_API_KEY,

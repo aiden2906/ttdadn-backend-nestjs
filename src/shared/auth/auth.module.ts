@@ -1,12 +1,18 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserModule } from 'src/modules/user/user.module';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './local.strategy';
 
+const passportConfig = PassportModule.register({
+  defaultStrategy: 'jwt',
+  property: 'user',
+});
+
+@Global()
 @Module({
-  imports: [UserModule, PassportModule],
+  imports: [UserModule, PassportModule, passportConfig],
   providers: [AuthService, LocalStrategy],
-  exports: [AuthService],
+  exports: [passportConfig, AuthService],
 })
 export class AuthModule {}
