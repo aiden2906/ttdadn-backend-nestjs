@@ -48,25 +48,29 @@ export class ControlDeviceService {
     const { status, level } = args;
     const client = this.mqttService.client;
 
-    //change device
-    const payload = {
-      device_id: 'LightD',
-      values: [`${status}`, `${level}`],
-    };
-    const payloadJSON = JSON.stringify([payload]);
-    client.publish(PUBLISH_TOPIC, payloadJSON);
     //change database
     const ref = firebase.app().database().ref();
     const deviceRef = ref.child('device').child('control');
     const [path, device] = await this.getByIdWithUUID(id);
-
     
-    device.level = level;
-    device.status = status;
+    device.level = level ? level : device.level;
+    device.status = status ? status : device.status;
+
+
+    //change device
+    const payload = {
+      device_id: 'LightD',
+      values: [`${device.status}`, `${device.level}`],
+    };
+    const payloadJSON = JSON.stringify([payload]);
+    client.publish(PUBLISH_TOPIC, payloadJSON);
     if (!device.history) {
       device.history = {};
     }
-    device.history[`${Date.now()}`] = { status, level };
+    device.history[`${Date.now()}`] = {
+      status: device.status,
+      level: device.level,
+    };
     const keyHistory = Object.keys(device.history);
     if (keyHistory.length > 100) {
       delete device.history[keyHistory[0]];
