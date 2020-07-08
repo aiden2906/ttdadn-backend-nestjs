@@ -39,5 +39,9 @@ export class AppController {
       const [temp, humi] = values;
       this.sensorDeviceService.update(device_id, { temp, humi });
     });
+
+    setInterval(() => {
+      this.gateway.wss.emit('notification', 'thongbao');
+    }, 2000);
   }
 }

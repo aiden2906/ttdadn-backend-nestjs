@@ -11,61 +11,79 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ACGuard } from 'nest-access-control';
-import { AuthGuard } from '@nestjs/passport';
-import { from } from 'rxjs';
+import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
 
-@Controller('user')
+@Controller('api.user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
   @Get()
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(JwtAuthGuard)
   async list() {
     return this.userService.list();
   }
 
   @Post()
   async create(@Body() args) {
+    console.log(args);
     return this.userService.create(args);
   }
 
-  @Post('reset-password')
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMe(@Req() req) {
+    const userId = req.user.id;
+    return this.userService.getMe(userId);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async get(@Param('id') id: number) {
+    return this.userService.get(id);
+  }
+
+  @Put(':id/active')
+  @UseGuards(JwtAuthGuard)
+  async active(@Req() req, @Param('id') id: number) {
+    const userId = req.user && req.user.id;
+    return this.userService.active(id);
+  }
+
+  @Put(':id/disable')
+  @UseGuards(JwtAuthGuard)
+  async disable(@Req() req, @Param('id') id: number) {
+    const userId = req.user && req.user.id;
+    return this.userService.disable(id);
+  }
+
+  @Put('reset-password')
   async resetPassword(@Body() args) {
     return this.userService.resetPassword(args);
   }
 
-  @Get(':id')
-  @UseGuards(AuthGuard('local'))
-  async get(@Param('id') id: string) {
-    return this.userService.get(id);
-  }
-
   @Put()
-  @UseGuards(AuthGuard('local'))
-  async update(@Body() args) {
-    return this.userService.update(args);
+  @UseGuards(JwtAuthGuard)
+  async update(@Body() args, @Req() req) {
+    const userId = req.user.id;
+    console.log(userId);
+    console.log(args);
+    return this.userService.update(userId, args);
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('local'))
-  async delete(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  async delete(@Param('id') id: number) {
     return this.userService.delete(id);
   }
 
-  @Post('login')
+  @Put('login')
   async login(@Body() args) {
     console.log(args);
     return this.userService.login(args);
   }
 
-  @Post('forget-password')
+  @Put('forget-password')
   async forgotPassword(@Body() args) {
     return this.userService.forgotPassword(args);
-  }
-
-  @Post('test')
-  // @UseGuards(AuthGuard(), ACGuard)
-  async test(@Req() req) {
-    return req.user;
   }
 }

@@ -5,14 +5,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { firebase } from '../../firebase';
-import { uuid } from 'uuidv4';
 import bcrypt = require('bcrypt');
-import jwt = require('jsonwebtoken');
-import { SALTROUNDS, SECRETKEY } from '../../environments';
+import { SALTROUNDS } from '../../environments';
 import { transporter } from '../../shared/modules/mail';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
+  constructor(private readonly jwtService: JwtService) {}
   async list() {
     const ref = firebase.app().database().ref();
     const userRef = ref.child('user');
@@ -23,68 +23,80 @@ export class UserService {
     return users;
   }
 
-  async get(id: string) {
+  async get(id: number) {
+    console.log('getById');
+    console.log(id);
     const users = await this.list();
-    const user = users.find((item) => item.id === id);
+    console.log(users);
+    const user = users.find((item) => item.id == id);
+    console.log(user);
     if (!user) {
-      throw new NotFoundException('not found user');
+      throw new NotFoundException('not found user1');
     }
     return user;
   }
   private async getByUsername(username: string) {
+    console.log('getByUsername');
     const users = await this.list();
     return users.find((item) => item.username === username);
   }
 
+  private async genId(): Promise<number> {
+    const users = await this.list();
+    return users.length + 1;
+  }
+
   async create(args) {
-    const { fullname, username, password, email, dateOfBirth } = args;
+    const { fullname, username, password, email } = args;
     const existUser = await this.getByUsername(username);
     if (existUser) {
-      throw new BadRequestException('user already exists');
+      throw new BadRequestException('username already exists');
     }
-    const userId = uuid();
     const hash = bcrypt.hashSync(password, Number(SALTROUNDS));
+    const id = await this.genId();
     const user = {
-      id: userId,
+      id,
       fullname,
       username,
       password: hash,
       email,
-      dateOfBirth,
-      createdAt: new Date(),
+      createdAt: new Date().getTime(),
+      isActive: true,
     };
 
     const ref = firebase.app().database().ref();
     const userRef = ref.child('user');
-    await userRef.child(userId).set(user);
+    await userRef.child(String(id)).set(user);
   }
 
-  async update(args) {
-    const { username, fullname, password, email, dateOfBirth } = args;
-    const user = await this.getByUsername(username);
+  async update(userId: number, args) {
+    console.log('update');
+    const { fullname, about, email, password, isActive } = args;
+    const user = await this.get(userId);
     if (!user) {
-      throw new NotFoundException('not found user');
+      throw new NotFoundException('not found user2');
     }
 
-    user.fullname = fullname ? fullname : user.fullname;
+    user.fullname = fullname !== undefined ? fullname : user.fullname;
     user.password = password
       ? bcrypt.hashSync(password, Number(SALTROUNDS))
       : user.password;
-    user.email = email ? email : user.email;
-    user.dateOfBirth = dateOfBirth ? dateOfBirth : user.dateOfBirth;
-    const userId = user.id;
+    user.email = email !== undefined ? email : user.email;
+    user.about = about !== undefined ? about : user.about;
+    user.updatedAt = new Date().getTime();
+    user.isActive = isActive !== undefined ? isActive : user.isActive;
     const ref = firebase.app().database().ref();
     const userRef = ref.child('user');
-    await userRef.child(userId).set(user);
+    await userRef.child(String(userId)).set(user);
     return user;
   }
 
-  async delete(id: string) {
+  async delete(id: number) {
     const ref = firebase.app().database().ref();
     const userRef = ref.child('user');
     const user = await this.get(id);
     const userId = user.id;
-    await userRef.child(userId).remove();
+    await userRef.child(String(userId)).remove();
     return user;
   }
 
@@ -95,14 +107,11 @@ export class UserService {
     if (!check) {
       throw new BadRequestException('incorrect password');
     }
-    const token = jwt.sign(
-      {
-        username,
-        password,
-      },
-      SECRETKEY,
-      { expiresIn: '2h' },
-    );
+    const token = this.jwtService.sign({
+      id: user.id,
+      username,
+      password,
+    });
     return token;
   }
 
@@ -114,7 +123,7 @@ export class UserService {
       username: user.username,
       password: user.password,
     };
-    const token = jwt.sign(payload, SECRETKEY, { expiresIn: '1h' });
+    const token = this.jwtService.sign(payload);
     const info = await transporter.sendMail({
       from: '"👻👻👻👻" <dthuctap@gmail.com>', // sender address
       to: email, // list of receivers
@@ -128,7 +137,7 @@ export class UserService {
 
   async resetPassword(args) {
     const { newPassword, token } = args;
-    const payload = jwt.verify(token, SECRETKEY);
+    const payload = this.jwtService.verify(token);
     const { username, password } = payload;
     const user = await this.getByUsername(username);
 
@@ -143,11 +152,28 @@ export class UserService {
   }
 
   async getByName(username: string) {
+    console.log('getByName');
     const users = await this.list();
     const user = users.find((item) => item.username === username);
     if (!user) {
-      throw new NotFoundException('not found user');
+      throw new NotFoundException('not found user3');
     }
     return user;
+  }
+
+  async getMe(userId: number) {
+    const user = await this.get(userId);
+    const { password, ...publicInfo } = user;
+    return publicInfo;
+  }
+
+  async active(id: number) {
+    const user = await this.get(id);
+    await this.update(id, { isActive: true });
+  }
+
+  async disable(id: number) {
+    const user = await this.get(id);
+    await this.update(id, { isActive: false });
   }
 }
