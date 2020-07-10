@@ -9,6 +9,7 @@ import {
   Delete,
   Req,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
@@ -32,27 +33,25 @@ export class UserController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getMe(@Req() req) {
-    const userId = req.user.id;
-    return this.userService.getMe(userId);
+    const user_id = req.user.id;
+    return this.userService.getMe(user_id);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async get(@Param('id') id: number) {
+  async get(@Param('id', new ParseIntPipe()) id: number) {
     return this.userService.get(id);
   }
 
   @Put(':id/active')
   @UseGuards(JwtAuthGuard)
-  async active(@Req() req, @Param('id') id: number) {
-    const userId = req.user && req.user.id;
+  async active(@Req() req, @Param('id', new ParseIntPipe()) id: number) {
     return this.userService.active(id);
   }
 
   @Put(':id/disable')
   @UseGuards(JwtAuthGuard)
-  async disable(@Req() req, @Param('id') id: number) {
-    const userId = req.user && req.user.id;
+  async disable(@Req() req, @Param('id', new ParseIntPipe()) id: number) {
     return this.userService.disable(id);
   }
 
@@ -64,15 +63,13 @@ export class UserController {
   @Put()
   @UseGuards(JwtAuthGuard)
   async update(@Body() args, @Req() req) {
-    const userId = req.user.id;
-    console.log(userId);
-    console.log(args);
-    return this.userService.update(userId, args);
+    const user_id = req.user.id;
+    return this.userService.update(user_id, args);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async delete(@Param('id') id: number) {
+  async delete(@Param('id', new ParseIntPipe()) id: number) {
     return this.userService.delete(id);
   }
 

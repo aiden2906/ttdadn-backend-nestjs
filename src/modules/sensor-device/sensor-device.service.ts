@@ -1,12 +1,17 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { MqttService } from 'src/shared/modules/mqtt/mqtt.service';
 import { firebase } from 'src/firebase';
 import { uuid } from 'uuidv4';
 
 @Injectable()
 export class SensorDeviceService {
+  private async genId(): Promise<number> {
+    const users = await this.list();
+    return users.length + 1;
+  }
+
   async get(id: string) {
+    console.log(id);
     const devices = await this.list();
     const device = devices.find((item) => item.id === id);
     if (!device) {
@@ -17,9 +22,9 @@ export class SensorDeviceService {
 
   async list() {
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('sensor');
+    const device_ref = ref.child('device').child('sensor');
     let devices = null;
-    await deviceRef.once('value', (snap) => {
+    await device_ref.once('value', (snap) => {
       devices = Object.entries(snap.val()).map((item) => item[1]);
     });
 
@@ -29,9 +34,9 @@ export class SensorDeviceService {
   async create(args) {
     const { id, temp, humi } = args;
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('sensor');
+    const device_ref = ref.child('device').child('sensor');
     const path = uuid();
-    deviceRef.child(path).set({
+    device_ref.child(path).set({
       id,
       temp,
       humi,
@@ -41,10 +46,10 @@ export class SensorDeviceService {
   async update(id: string, args) {
     const { temp, humi } = args;
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('sensor');
+    const device_ref = ref.child('device').child('sensor');
     const x = await this.getByIdWithUUID(id);
-    if (!x){
-      await this.create({id, temp, humi});
+    if (!x) {
+      await this.create({ id, temp, humi });
     }
     const [path, device] = await this.getByIdWithUUID(id);
     device.humi = humi;
@@ -52,28 +57,28 @@ export class SensorDeviceService {
     if (!device.history) {
       device.history = {};
     }
-    device.history[`${Date.now()}`] = {temp,humi};
-    const keyHistory = Object.keys(device.history);
-    if (keyHistory.length > 100) {
-      delete device.history[keyHistory[0]];
+    device.history[`${Date.now()}`] = { temp, humi };
+    const key_history = Object.keys(device.history);
+    if (key_history.length > 100) {
+      delete device.history[key_history[0]];
     }
-    deviceRef.child(path).set(device);
+    device_ref.child(path).set(device);
     return args;
   }
 
   async delete(id: string) {
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('sensor');
+    const device_ref = ref.child('device').child('sensor');
     const device = await this.getByIdWithUUID(id);
-    deviceRef.child(device[0]).remove();
+    device_ref.child(device[0]).remove();
     return device[1];
   }
 
   async getByIdWithUUID(id: string) {
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('sensor');
+    const device_ref = ref.child('device').child('sensor');
     let device = null;
-    await deviceRef.once('value', (snap) => {
+    await device_ref.once('value', (snap) => {
       device = Object.entries(snap.val()).find(
         (item: any) => item[1].id === id,
       );

@@ -12,20 +12,20 @@ import {
 import { SensorDeviceService } from './sensor-device.service';
 import { JwtAuthGuard } from 'src/shared/auth/jwt-auth.guard';
 
-@Controller('sensor')
+@Controller('api.sensor')
 export class SensorDeviceController {
   constructor(private readonly sensorDeviceService: SensorDeviceService) {}
-
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  async list() {
-    return this.sensorDeviceService.list();
-  }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   async get(@Param('id') id: string) {
+    console.log('this ', id);
     return this.sensorDeviceService.get(id);
+  }
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async list() {
+    return this.sensorDeviceService.list();
   }
 
   @Post()

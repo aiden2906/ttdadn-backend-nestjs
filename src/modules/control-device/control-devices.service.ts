@@ -21,21 +21,21 @@ export class ControlDeviceService {
 
   async list() {
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('control');
+    const device_ref = ref.child('device').child('control');
     let devices = null;
-    await deviceRef.once('value', (snap) => {
+    await device_ref.once('value', (snap) => {
       devices = Object.entries(snap.val()).map((item) => item[1]);
     });
-
+    console.log(devices);
     return devices;
   }
 
   async create(args: ControlDeviceCreateDto) {
     const { id, status, level } = args;
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('control');
+    const device_ref = ref.child('device').child('control');
     const path = uuid();
-    deviceRef.child(path).set({
+    device_ref.child(path).set({
       id,
       status,
       level,
@@ -50,12 +50,11 @@ export class ControlDeviceService {
 
     //change database
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('control');
+    const device_ref = ref.child('device').child('control');
     const [path, device] = await this.getByIdWithUUID(id);
-    
+
     device.level = level ? level : device.level;
     device.status = status ? status : device.status;
-
 
     //change device
     const payload = {
@@ -71,27 +70,27 @@ export class ControlDeviceService {
       status: device.status,
       level: device.level,
     };
-    const keyHistory = Object.keys(device.history);
-    if (keyHistory.length > 100) {
-      delete device.history[keyHistory[0]];
+    const key_history = Object.keys(device.history);
+    if (key_history.length > 100) {
+      delete device.history[key_history[0]];
     }
-    deviceRef.child(path).set(device);
+    device_ref.child(path).set(device);
     return args;
   }
 
   async delete(id: string) {
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('control');
+    const device_ref = ref.child('device').child('control');
     const device = await this.getByIdWithUUID(id);
-    deviceRef.child(device[0]).remove();
+    device_ref.child(device[0]).remove();
     return device[1];
   }
 
   async getByIdWithUUID(id: string) {
     const ref = firebase.app().database().ref();
-    const deviceRef = ref.child('device').child('control');
+    const device_ref = ref.child('device').child('control');
     let device = null;
-    await deviceRef.once('value', (snap) => {
+    await device_ref.once('value', (snap) => {
       device = Object.entries(snap.val()).find(
         (item: any) => item[1].id === id,
       );

@@ -1,55 +1,64 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { firebase } from '../../firebase';
-import { uuid } from 'uuidv4';
-import { ControlDeviceService } from '../control-device/control-devices.service';
-import { SensorDeviceService } from '../sensor-device/sensor-device.service';
+import { Status_Notification } from './notification.constant';
+import { AppGateway } from 'src/app.gateway';
 
 @Injectable()
 export class NotificationService {
-  constructor(
-    private readonly controlDeviceService: ControlDeviceService,
-    private readonly sensorDeviceService: SensorDeviceService,
-  ) {}
+  constructor(private readonly gateway: AppGateway) {}
+
   async create(args) {
-    const { deviceId, content } = args;
+    const { device_id, content } = args;
     const ref = firebase.app().database().ref();
-    const notificationRef = ref.child('notification');
-    const path = uuid();
-    notificationRef.child(path).set({
-      id: path,
+    const notification_ref = ref.child('notification');
+    const id = await this.genId();
+    const new_notification = {
+      id,
       content,
-      deviceId,
-    });
-    return {
-      id: path,
-      content,
-      deviceId,
+      device_id,
+      status: Status_Notification.NEW,
+      created_at: new Date().getTime(),
     };
+    this.gateway.wss.emit('notification', new_notification);
+    notification_ref.child(String(id)).set(new_notification);
+    return new_notification;
   }
 
-  async get(id: string) {
+  async get(id: number) {
     const notifications = await this.list();
-    const existNotification = notifications.find((item) => item.id === id);
-    if (!existNotification) {
+    const exist_notification = notifications.find((item) => item.id === id);
+    if (!exist_notification) {
       throw new NotFoundException('not found notification');
     }
-    return existNotification;
+    if (exist_notification.status === Status_Notification.NEW) {
+      const ref = firebase.app().database().ref();
+      const notification_ref = ref.child('notification');
+      exist_notification.status = Status_Notification.SEEN;
+      notification_ref.child(String(exist_notification.id)).set(exist_notification);
+    }
+    return exist_notification;
   }
 
   async list() {
     const ref = firebase.app().database().ref();
-    const notificationRef = ref.child('notification');
+    const notification_ref = ref.child('notification');
     let notifications = null;
-    await notificationRef.once('value', (snap) => {
+    await notification_ref.once('value', (snap) => {
       notifications = Object.entries(snap.val()).map((item) => item[1]);
     });
     return notifications;
   }
 
-  async delete(id: string) {
+  async delete(id: number) {
     const ref = firebase.app().database().ref();
-    const notificationRef = ref.child('notification');
-    notificationRef.child(id).remove();
+    const notification_ref = ref.child('notification');
+    notification_ref.child(String(id)).remove();
+  }
+
+  private async genId(): Promise<number> {
+    const notifications = await this.list();
+    return notifications.length + 1;
   }
 }

@@ -5,6 +5,7 @@ import { SUBSCRIBE_TOPIC, APP_ID, USERNAME, PASSWORD } from './environments';
 import { firebase } from './firebase';
 import { ControlDeviceService } from './modules/control-device/control-devices.service';
 import { SensorDeviceService } from './modules/sensor-device/sensor-device.service';
+import { NotificationService } from './modules/notification/notification.service';
 
 @Controller()
 export class AppController {
@@ -13,35 +14,42 @@ export class AppController {
     private readonly gateway: AppGateway,
     private readonly controlDeviceService: ControlDeviceService,
     private readonly sensorDeviceService: SensorDeviceService,
+    private readonly notificationService: NotificationService,
   ) {}
   async onModuleInit(): Promise<void> {
     console.log('appControllerRunning');
     await this.mqttService.connect(APP_ID, USERNAME, PASSWORD, SUBSCRIBE_TOPIC); //topic1
 
     const ref = firebase.app().database().ref();
-    const sensorDeviceRef = ref.child('device').child('sensor');
-    const controlDeviceRef = ref.child('device').child('control');
-    sensorDeviceRef.on('value', (snapshot) => {
+    const sensor_device_ref = ref.child('device').child('sensor');
+    const control_device_ref = ref.child('device').child('control');
+    const notification_ref = ref.child('notification');
+    sensor_device_ref.on('value', (snapshot) => {
       const devices = Object.entries(snapshot.val()).map((item) => item[1]);
       this.gateway.wss.emit('sensorChange', devices);
     });
-    controlDeviceRef.on('value', (snapshot) => {
+    control_device_ref.on('value', (snapshot) => {
       const devices = Object.entries(snapshot.val()).map((item) => item[1]);
       this.gateway.wss.emit('controlChange', devices);
     });
-
+    notification_ref.on('value', (snapshot) => {
+      const notifications = Object.entries(snapshot.val()).map(
+        (item) => item[1],
+      );
+      this.gateway.wss.emit('count_notifications', notifications);
+    });
     this.mqttService.client.on('message', async (topic, message) => {
-      //sensor id1,  fan id2
       console.log(`${topic} : ${message}`);
-      const valueMessage = JSON.parse(message.toString());
-      const { device_id, values } = valueMessage[0];
-      console.log(values);
+      const value_message = JSON.parse(message.toString());
+      const { device_id, values } = value_message[0];
       const [temp, humi] = values;
+      if (humi > 10) {
+        this.notificationService.create({
+          device_id,
+          content: `Độ ẩm vượt ngưỡng cho phép 70%, Độ ẩm hiện tại ${humi}`,
+        });
+      }
       this.sensorDeviceService.update(device_id, { temp, humi });
     });
-
-    setInterval(() => {
-      this.gateway.wss.emit('notification', 'thongbao');
-    }, 2000);
   }
 }

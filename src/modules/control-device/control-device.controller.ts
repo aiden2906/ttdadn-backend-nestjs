@@ -17,7 +17,7 @@ import {
 import { ControlDeviceService } from './control-devices.service';
 import { JwtAuthGuard } from 'src/shared/auth/jwt-auth.guard';
 
-@Controller('control')
+@Controller('api.control')
 export class ControlDeviceController {
   constructor(
     private readonly mqttService: MqttService,

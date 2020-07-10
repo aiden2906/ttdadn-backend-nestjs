@@ -1,11 +1,27 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from 'src/shared/auth/jwt-auth.guard';
 
-@Controller('notification')
+@Controller('api.notification')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  async list() {
+    return this.notificationService.list();
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@Body() args) {
@@ -14,13 +30,13 @@ export class NotificationController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async get(@Param('id') id: string) {
+  async get(@Param('id', new ParseIntPipe()) id: number) {
     return this.notificationService.get(id);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id', new ParseIntPipe()) id: number) {
     return this.notificationService.delete(id);
   }
 }
