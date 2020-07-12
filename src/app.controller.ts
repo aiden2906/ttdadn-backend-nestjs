@@ -19,11 +19,18 @@ export class AppController {
   async onModuleInit(): Promise<void> {
     console.log('appControllerRunning');
     await this.mqttService.connect(APP_ID, USERNAME, PASSWORD, SUBSCRIBE_TOPIC); //topic1
-
     const ref = firebase.app().database().ref();
     const sensor_device_ref = ref.child('device').child('sensor');
     const control_device_ref = ref.child('device').child('control');
     const notification_ref = ref.child('notification');
+    const setting_ref = ref.child('setting');
+    let setting;
+    setting_ref.once('value', (snap) => {
+      setting = Object.entries(snap.val()).map((item) => item[1]);
+    });
+    setting_ref.on('value', (snapshot) => {
+      setting = Object.entries(snapshot.val()).map((item) => item[1]);
+    });
     sensor_device_ref.on('value', (snapshot) => {
       const devices = Object.entries(snapshot.val()).map((item) => item[1]);
       this.gateway.wss.emit('sensorChange', devices);
@@ -43,10 +50,21 @@ export class AppController {
       const value_message = JSON.parse(message.toString());
       const { device_id, values } = value_message[0];
       const [temp, humi] = values;
-      if (humi > 70) {
+      const [large, medium, small] = setting;
+      if (small < temp) {
         this.notificationService.create({
           device_id,
-          content: `Độ ẩm vượt ngưỡng cho phép 70%, Độ ẩm hiện tại ${humi}`,
+          content: `Độ ẩm trên ${small}%, nhiệt độ hiện tại ${temp}`,
+        });
+      } else if (medium < temp) {
+        this.notificationService.create({
+          device_id,
+          content: `Độ ẩm trên ${medium}%, nhiệt độ hiện tại ${temp}`,
+        });
+      } else if (large < temp) {
+        this.notificationService.create({
+          device_id,
+          content: `Độ ẩm trên ${large}%, nhiệt độ hiện tại ${temp}`,
         });
       }
       this.sensorDeviceService.update(device_id, { temp, humi });
