@@ -97,4 +97,23 @@ export class ControlDeviceService {
     });
     return device;
   }
+
+  async setting(args) {
+    let setting;
+    const { small, medium, large } = args || {};
+    const ref = firebase.app().database().ref();
+    const setting_ref = ref.child('setting');
+    if (small && medium && large) {
+      const small_setting_ref = setting_ref.child('small');
+      const medium_setting_ref = setting_ref.child('medium');
+      const large_setting_ref = setting_ref.child('large');
+      small_setting_ref.set(small);
+      medium_setting_ref.set(medium);
+      large_setting_ref.set(large);
+    }
+    await setting_ref.once('value', (snap) => {
+      setting = Object.entries(snap.val()).map((item) => item[1]);
+    });
+    return setting;
+  }
 }

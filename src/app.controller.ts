@@ -43,7 +43,7 @@ export class AppController {
       const value_message = JSON.parse(message.toString());
       const { device_id, values } = value_message[0];
       const [temp, humi] = values;
-      if (humi > 10) {
+      if (humi > 70) {
         this.notificationService.create({
           device_id,
           content: `Độ ẩm vượt ngưỡng cho phép 70%, Độ ẩm hiện tại ${humi}`,

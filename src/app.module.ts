@@ -11,6 +11,7 @@ import { ControlDeviceService } from './modules/control-device/control-devices.s
 import { UserModule } from './modules/user/user.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { AuthModule } from './shared/auth/auth.module';
+import { RoomModule } from './modules/room/room.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AuthModule } from './shared/auth/auth.module';
     UserModule,
     NotificationModule,
     AuthModule,
+    RoomModule
   ],
   controllers: [AppController],
   providers: [

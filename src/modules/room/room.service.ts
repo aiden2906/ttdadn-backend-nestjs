@@ -20,7 +20,7 @@ export class RoomService {
     private readonly controlDeviceService: ControlDeviceService,
   ) {}
   async create(args) {
-    const { name } = args;
+    const { name, devices } = args;
     const ref = firebase.app().database().ref();
     const roomRef = ref.child('room');
     const rooms = await this.list();
@@ -32,7 +32,7 @@ export class RoomService {
     const room = {
       id: path,
       name,
-      controlDeviceIds: [],
+      controlDeviceIds: devices || [],
       sensorDeviceIds: [],
     };
     await roomRef.child(path).set(room);
@@ -41,12 +41,21 @@ export class RoomService {
 
   async getById(id: string) {
     const rooms = await this.list();
-    const existRoom = rooms.find((item) => item.id === id);
+    const existRoom = rooms.find((item) => item.id == id);
     if (!existRoom) {
       throw new NotFoundException('not found room');
     }
+    existRoom.devices = existRoom.controlDeviceIds
+      ? await Promise.all(
+          existRoom.controlDeviceIds.map((deviceId) => {
+            return this.controlDeviceService.get(deviceId);
+          }),
+        )
+      : [];
+    console.log('----------------');
+    console.log(existRoom.devices);
     return existRoom;
-  }
+  } 
 
   async list() {
     const ref = firebase.app().database().ref();

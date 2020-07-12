@@ -28,6 +28,12 @@ export class ControlDeviceController {
   async list() {
     return this.controlDeviceService.list();
   }
+  
+  @Put('setting')
+  @UseGuards(JwtAuthGuard)
+  async setting(@Body() args) {
+    return this.controlDeviceService.setting(args);
+  }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
