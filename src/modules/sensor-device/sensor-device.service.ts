@@ -2,6 +2,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { firebase } from 'src/firebase';
 import { uuid } from 'uuidv4';
+import { SensorDeviceCreateDto, SensorDeviceUpdateDto } from './dtos/sensor-device.dto';
 
 @Injectable()
 export class SensorDeviceService {
@@ -11,7 +12,6 @@ export class SensorDeviceService {
   }
 
   async get(id: string) {
-    console.log(id);
     const devices = await this.list();
     const device = devices.find((item) => item.id === id);
     if (!device) {
@@ -31,7 +31,7 @@ export class SensorDeviceService {
     return devices;
   }
 
-  async create(args) {
+  async create(args: SensorDeviceCreateDto) {
     const { id, temp, humi } = args;
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('sensor');
@@ -43,7 +43,7 @@ export class SensorDeviceService {
     });
   }
 
-  async update(id: string, args) {
+  async update(id: string, args: SensorDeviceUpdateDto) {
     const { temp, humi } = args;
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('sensor');
@@ -77,7 +77,7 @@ export class SensorDeviceService {
   async getByIdWithUUID(id: string) {
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('sensor');
-    let device = null;
+    let device;
     await device_ref.once('value', (snap) => {
       device = Object.entries(snap.val()).find(
         (item: any) => item[1].id === id,

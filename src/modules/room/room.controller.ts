@@ -4,12 +4,13 @@ import {
   Post,
   Body,
   UseGuards,
-  Put,
   Get,
   Param,
+  Put,
 } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { JwtAuthGuard } from 'src/shared/auth/jwt-auth.guard';
+import { RoomCreateDto } from './dtos/room.dto';
 
 @Controller('api.room')
 export class RoomController {
@@ -17,7 +18,7 @@ export class RoomController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Body() args) {
+  async create(@Body() args: RoomCreateDto) {
     return this.roomService.create(args);
   }
 
@@ -30,9 +31,8 @@ export class RoomController {
     return this.roomService.list();
   }
 
-
-  // @Put()
-  // async update(@Body() args) {
-  //   return this.roomService.update();
-  // }
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() args) {
+    return this.roomService.update(id, args);
+  }
 }

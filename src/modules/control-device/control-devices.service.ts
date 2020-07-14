@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ControlDeviceCreateDto } from './dtos/control-device.dto';
+import {
+  ControlDeviceCreateDto,
+  ControlDeviceUpdateDto,
+} from './dtos/control-device.dto';
 import { MqttService } from 'src/shared/modules/mqtt/mqtt.service';
 import { firebase } from '../../firebase';
 import { uuid } from 'uuidv4';
 import { PUBLISH_TOPIC } from 'src/environments';
+import { SettingDto, Setting } from './dtos/setting.dto';
 
 @Injectable()
 export class ControlDeviceService {
@@ -12,7 +16,7 @@ export class ControlDeviceService {
 
   async get(id: string) {
     const devices = await this.list();
-    const device = devices.find((item) => item.id === id);
+    const device = devices.find((item) => item.id == id);
     if (!device) {
       throw new BadRequestException('not found device');
     }
@@ -32,6 +36,10 @@ export class ControlDeviceService {
 
   async create(args: ControlDeviceCreateDto) {
     const { id, status, level } = args;
+    // const existControl = await this.get(id);
+    // if (existControl) {
+    //   throw new BadRequestException('Control already exist');
+    // }
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('control');
     const path = uuid();
@@ -42,21 +50,14 @@ export class ControlDeviceService {
     });
   }
 
-  async update(id: string, args) {
-    console.log(id);
-    console.log(args);
+  async update(id: string, args: ControlDeviceUpdateDto) {
     const { status, level } = args;
     const client = this.mqttService.client;
-
-    //change database
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('control');
     const [path, device] = await this.getByIdWithUUID(id);
-
     device.level = level ? level : device.level;
     device.status = status ? status : device.status;
-
-    //change device
     const payload = {
       device_id: 'LightD',
       values: [`${device.status}`, `${device.level}`],
@@ -97,23 +98,31 @@ export class ControlDeviceService {
     });
     return device;
   }
-
-  async setting(args) {
-    let setting;
-    const { small, medium, large } = args || {};
+  private async getSetting() {
     const ref = firebase.app().database().ref();
     const setting_ref = ref.child('setting');
-    if (small && medium && large) {
-      const small_setting_ref = setting_ref.child('small');
-      const medium_setting_ref = setting_ref.child('medium');
-      const large_setting_ref = setting_ref.child('large');
-      small_setting_ref.set(small);
-      medium_setting_ref.set(medium);
-      large_setting_ref.set(large);
-    }
+    let setting;
     await setting_ref.once('value', (snap) => {
       setting = Object.entries(snap.val()).map((item) => item[1]);
     });
+    return setting;
+  }
+
+  private async updateSetting(setting: Setting) {
+    const ref = firebase.app().database().ref();
+    const setting_ref = ref.child('setting');
+    const { small, medium, large } = setting;
+    setting_ref.child('small').set(small);
+    setting_ref.child('medium').set(medium);
+    setting_ref.child('large').set(large);
+    return setting;
+  }
+
+  async setting(args: SettingDto) {
+    let setting = await this.getSetting();
+    if (args.setting) {
+      setting = await this.updateSetting(args.setting);
+    }
     return setting;
   }
 }

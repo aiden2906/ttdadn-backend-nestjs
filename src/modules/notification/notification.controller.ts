@@ -25,7 +25,7 @@ export class NotificationController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@Body() args) {
-    return this.notificationService.create(args);
+    return this.notificationService.create(args, 'info');
   }
 
   @Get(':id')
