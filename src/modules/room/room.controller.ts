@@ -4,12 +4,14 @@ import {
   Post,
   Body,
   UseGuards,
-  Put,
   Get,
   Param,
+  Put,
+  Req,
 } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { JwtAuthGuard } from 'src/shared/auth/jwt-auth.guard';
+import { RoomCreateDto } from './dtos/room.dto';
 
 @Controller('api.room')
 export class RoomController {
@@ -17,8 +19,16 @@ export class RoomController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Body() args) {
-    return this.roomService.create(args);
+  async create(@Body() args: RoomCreateDto, @Req() req) {
+    return this.roomService.create(args, req.user.username);
+  }
+  @Get('all-rest-device')
+  async getAllRestDevice() {
+    return this.roomService.getAllRestDevice();
+  }
+  @Get(':id/all-visible-device')
+  async getVisibleDevice(@Param('id') id: string) {
+    return this.roomService.getVisibleDevice(id);
   }
 
   @Get(':id')
@@ -30,9 +40,8 @@ export class RoomController {
     return this.roomService.list();
   }
 
-
-  // @Put()
-  // async update(@Body() args) {
-  //   return this.roomService.update();
-  // }
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() args) {
+    return this.roomService.update(id, args);
+  }
 }

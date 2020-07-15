@@ -2,44 +2,45 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDefined,
   IsNumber,
-  IsString,
   IsOptional,
+  IsString,
   IsIn,
 } from 'class-validator';
-import { StatusControl, STATUS_CONTROL } from '../control.constant';
+import { STATUS_SENSOR, StatusSensor } from '../sensor.constant';
 
-export class ControlDeviceDto {
+class SensorDeviceDto {
   @ApiProperty()
   @IsDefined()
   @IsNumber()
-  status: number;
+  temp: number;
 
   @ApiProperty()
   @IsDefined()
   @IsNumber()
-  level: number;
+  humi: number;
 }
 
-export class ControlDeviceCreateDto extends ControlDeviceDto {
-  @ApiProperty()
-  @IsDefined()
+export class SensorDeviceCreateDto extends SensorDeviceDto {
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   id: string;
 }
-export class ControlDeviceUpdateDto extends ControlDeviceDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumber()
-  status: number;
+export class SensorDeviceUpdateDto extends SensorDeviceDto {
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
-  level: number;
+  temp: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  humi: number;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @IsIn(STATUS_CONTROL)
-  status_device: StatusControl;
+  @IsIn(STATUS_SENSOR)
+  status_device: StatusSensor;
 }

@@ -4,12 +4,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { firebase } from '../../firebase';
 import { Status_Notification } from './notification.constant';
 import { AppGateway } from 'src/app.gateway';
+import { NotificationCreateDto } from './dtos/notification.dto';
 
 @Injectable()
 export class NotificationService {
   constructor(private readonly gateway: AppGateway) {}
 
-  async create(args) {
+  async create(args: NotificationCreateDto, type: string) {
     const { device_id, content } = args;
     const ref = firebase.app().database().ref();
     const notification_ref = ref.child('notification');
@@ -20,6 +21,7 @@ export class NotificationService {
       device_id,
       status: Status_Notification.NEW,
       created_at: new Date().getTime(),
+      type,
     };
     this.gateway.wss.emit('notification', new_notification);
     notification_ref.child(String(id)).set(new_notification);
@@ -36,7 +38,9 @@ export class NotificationService {
       const ref = firebase.app().database().ref();
       const notification_ref = ref.child('notification');
       exist_notification.status = Status_Notification.SEEN;
-      notification_ref.child(String(exist_notification.id)).set(exist_notification);
+      notification_ref
+        .child(String(exist_notification.id))
+        .set(exist_notification);
     }
     return exist_notification;
   }
@@ -44,7 +48,7 @@ export class NotificationService {
   async list() {
     const ref = firebase.app().database().ref();
     const notification_ref = ref.child('notification');
-    let notifications = null;
+    let notifications;
     await notification_ref.once('value', (snap) => {
       notifications = Object.entries(snap.val()).map((item) => item[1]);
     });
@@ -59,6 +63,7 @@ export class NotificationService {
 
   private async genId(): Promise<number> {
     const notifications = await this.list();
-    return notifications.length + 1;
+    const notification = notifications.pop();
+    return parseInt(notification.id) + 1;
   }
 }

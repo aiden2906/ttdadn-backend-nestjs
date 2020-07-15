@@ -10,6 +10,12 @@ import bcrypt = require('bcrypt');
 import { SALTROUNDS } from '../../environments';
 import { transporter } from '../../shared/modules/mail';
 import { JwtService } from '@nestjs/jwt';
+import { UserCreateDto, UserUpdateDto } from './dtos/user.dto';
+import {
+  LoginDto,
+  ForgotPasswordDtp,
+  ResetPasswordDto,
+} from './dtos/login.dto';
 
 @Injectable()
 export class UserService {
@@ -39,10 +45,11 @@ export class UserService {
 
   private async genId(): Promise<number> {
     const users = await this.list();
-    return users.length + 1;
+    const user = users.pop();
+    return parseInt(user.id);
   }
 
-  async create(args) {
+  async create(args: UserCreateDto) {
     const { fullname, username, password, email } = args;
     const exist_user = await this.getByUsername(username);
     if (exist_user) {
@@ -66,7 +73,7 @@ export class UserService {
     await user_ref.child(String(id)).set(user);
   }
 
-  async update(user_id: number, args) {
+  async update(user_id: number, args: UserUpdateDto | any) {
     const { fullname, about, email, password, is_active } = args;
     const user = await this.get(user_id);
     if (!user) {
@@ -96,10 +103,10 @@ export class UserService {
     return user;
   }
 
-  async login(args) {
+  async login(args: LoginDto) {
     const { username, password } = args;
     const user = await this.getByUsername(username);
-    console.log(user)
+    console.log(user);
     if (user.is_active === false) {
       throw new ForbiddenException('user not active yet');
     }
@@ -110,12 +117,11 @@ export class UserService {
     const token = this.jwtService.sign({
       id: user.id,
       username,
-      password,
     });
     return token;
   }
 
-  async forgotPassword(args) {
+  async forgotPassword(args: ForgotPasswordDtp) {
     const { username } = args;
     const user = await this.getByUsername(username);
     const { email } = user;
@@ -135,7 +141,7 @@ export class UserService {
     return info;
   }
 
-  async resetPassword(args) {
+  async resetPassword(args: ResetPasswordDto) {
     const { new_password, token } = args;
     const payload = this.jwtService.verify(token);
     const { username, password } = payload;
