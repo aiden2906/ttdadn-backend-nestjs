@@ -9,6 +9,7 @@ import { firebase } from '../../firebase';
 import { uuid } from 'uuidv4';
 import { PUBLISH_TOPIC } from 'src/environments';
 import { SettingDto, Setting } from './dtos/setting.dto';
+import { StatusControl } from './control.constant';
 
 @Injectable()
 export class ControlDeviceService {
@@ -36,10 +37,6 @@ export class ControlDeviceService {
 
   async create(args: ControlDeviceCreateDto) {
     const { id, status, level } = args;
-    // const existControl = await this.get(id);
-    // if (existControl) {
-    //   throw new BadRequestException('Control already exist');
-    // }
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('control');
     const path = uuid();
@@ -47,19 +44,30 @@ export class ControlDeviceService {
       id,
       status,
       level,
+      status_device: StatusControl.FREE,
     });
   }
 
-  async update(id: string, args: ControlDeviceUpdateDto) {
-    const { status, level } = args;
+  async toggleStatusControl(id: string) {
+    const control = await this.get(id);
+    if (control.status_device === StatusControl.FREE) {
+      this.update(control.id, { status_device: StatusControl.USED });
+    } else {
+      this.update(control.id, { status_device: StatusControl.FREE });
+    }
+  }
+
+  async update(id: string, args: ControlDeviceUpdateDto | any) {
+    const { status, level, status_device } = args;
     const client = this.mqttService.client;
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('control');
     const [path, device] = await this.getByIdWithUUID(id);
     device.level = level ? level : device.level;
     device.status = status ? status : device.status;
+    device.status_device = status_device ? status_device : device.status_device;
     const payload = {
-      device_id: 'LightD',
+      device_id: id,
       values: [`${device.status}`, `${device.level}`],
     };
     const payloadJSON = JSON.stringify([payload]);

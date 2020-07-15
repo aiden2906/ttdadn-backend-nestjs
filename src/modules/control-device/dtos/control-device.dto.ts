@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsNumber, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsDefined,
+  IsNumber,
+  IsString,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
+import { StatusControl, STATUS_CONTROL } from '../control.constant';
 
 export class ControlDeviceDto {
   @ApiProperty()
@@ -19,4 +26,20 @@ export class ControlDeviceCreateDto extends ControlDeviceDto {
   @IsString()
   id: string;
 }
-export class ControlDeviceUpdateDto extends ControlDeviceDto {}
+export class ControlDeviceUpdateDto extends ControlDeviceDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  status: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  level: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsIn(STATUS_CONTROL)
+  status_device: StatusControl;
+}

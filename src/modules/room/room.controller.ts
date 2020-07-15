@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   Put,
+  Req,
 } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { JwtAuthGuard } from 'src/shared/auth/jwt-auth.guard';
@@ -18,8 +19,16 @@ export class RoomController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Body() args: RoomCreateDto) {
-    return this.roomService.create(args);
+  async create(@Body() args: RoomCreateDto, @Req() req) {
+    return this.roomService.create(args, req.user.username);
+  }
+  @Get('all-rest-device')
+  async getAllRestDevice() {
+    return this.roomService.getAllRestDevice();
+  }
+  @Get(':id/all-visible-device')
+  async getVisibleDevice(@Param('id') id: string) {
+    return this.roomService.getVisibleDevice(id);
   }
 
   @Get(':id')

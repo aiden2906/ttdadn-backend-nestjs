@@ -2,7 +2,11 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { firebase } from 'src/firebase';
 import { uuid } from 'uuidv4';
-import { SensorDeviceCreateDto, SensorDeviceUpdateDto } from './dtos/sensor-device.dto';
+import {
+  SensorDeviceCreateDto,
+  SensorDeviceUpdateDto,
+} from './dtos/sensor-device.dto';
+import { StatusSensor } from './sensor.constant';
 
 @Injectable()
 export class SensorDeviceService {
@@ -40,11 +44,21 @@ export class SensorDeviceService {
       id,
       temp,
       humi,
+      status_device: StatusSensor.FREE,
     });
   }
 
-  async update(id: string, args: SensorDeviceUpdateDto) {
-    const { temp, humi } = args;
+  async toggleStatusSensor(id: string) {
+    const sensor = await this.get(id);
+    if (sensor.status_device === StatusSensor.FREE) {
+      this.update(sensor.id, { status_device: StatusSensor.USED });
+    } else {
+      this.update(sensor.id, { status_device: StatusSensor.FREE });
+    }
+  }
+
+  async update(id: string, args: SensorDeviceUpdateDto | any) {
+    const { temp, humi, status_device } = args;
     const ref = firebase.app().database().ref();
     const device_ref = ref.child('device').child('sensor');
     const x = await this.getByIdWithUUID(id);
@@ -52,8 +66,9 @@ export class SensorDeviceService {
       await this.create({ id, temp, humi });
     }
     const [path, device] = await this.getByIdWithUUID(id);
-    device.humi = humi;
-    device.temp = temp;
+    device.humi = humi ? humi : device.humi;
+    device.temp = temp ? temp : device.temp;
+    device.status_device = status_device ? status_device : device.status_device;
     if (!device.history) {
       device.history = {};
     }
