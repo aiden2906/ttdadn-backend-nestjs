@@ -51,7 +51,6 @@ export class AppController {
 
     room_ref.on('value', (snap) => {
       const rooms = Object.entries(snap.val()).map((item) => item[1]);
-      console.log('rooms');
       this.gateway.wss.emit('changeRoom', rooms);
     });
 
