@@ -5,6 +5,7 @@ import { SUBSCRIBE_TOPIC, APP_ID, USERNAME, PASSWORD } from './environments';
 import { firebase } from './firebase';
 import { SensorDeviceService } from './modules/sensor-device/sensor-device.service';
 import { NotificationService } from './modules/notification/notification.service';
+import { ControlDeviceService } from './modules/control-device/control-devices.service';
 
 @Controller()
 export class AppController {
@@ -13,6 +14,7 @@ export class AppController {
     private readonly gateway: AppGateway,
     private readonly sensorDeviceService: SensorDeviceService,
     private readonly notificationService: NotificationService,
+    private readonly controlDeviceService: ControlDeviceService,
   ) {}
   async onModuleInit(): Promise<void> {
     await this.mqttService.connect(APP_ID, USERNAME, PASSWORD, SUBSCRIBE_TOPIC);
@@ -23,6 +25,7 @@ export class AppController {
     const setting_ref = ref.child('setting');
     const room_ref = ref.child('room');
     let setting;
+    let control;
 
     setting_ref.once('value', (snap) => {
       setting = Object.entries(snap.val()).map((item) => item[1]);
@@ -38,8 +41,8 @@ export class AppController {
     });
 
     control_device_ref.on('value', (snapshot) => {
-      const devices = Object.entries(snapshot.val()).map((item) => item[1]);
-      this.gateway.wss.emit('controlChange', devices);
+      control = Object.entries(snapshot.val()).map((item) => item[1]);
+      this.gateway.wss.emit('controlChange', control);
     });
 
     notification_ref.on('value', (snapshot) => {
@@ -59,31 +62,49 @@ export class AppController {
       const value_message = JSON.parse(message.toString());
       const { device_id, values } = value_message[0];
       const [temp, humi] = values;
-      const [large, medium, small] = setting;
+      const [upper, lower, val] = setting;
       //TODO: setup control-device by temp
-      if (large < temp) {
+      // if (large < temp) {
+      //   this.notificationService.create(
+      //     {
+      //       device_id,
+      //       content: `Độ ẩm trên ${large}%, nhiệt độ hiện tại ${temp}`,
+      //     },
+      //     'error',
+      //   );
+      // } else if (medium < temp) {
+      //   this.notificationService.create(
+      //     {
+      //       device_id,
+      //       content: `Độ ẩm trên ${medium}%, nhiệt độ hiện tại ${temp}`,
+      //     },
+      //     'warning',
+      //   );
+      // } else if (small < temp) {
+      //   this.notificationService.create(
+      //     {
+      //       device_id,
+      //       content: `Độ ẩm trên ${small}%, nhiệt độ hiện tại ${temp}`,
+      //     },
+      //     'info',
+      //   );
+      // }
+      if (temp < lower || temp > upper) {
+        const content =
+          temp > upper
+            ? `Độ ẩm trên ${upper}%, nhiệt độ hiện tại ${temp}`
+            : `Độ ẩm dưới ${lower}%, nhiệt độ hiện tại ${temp}`;
+        if (control && control.length > 0) {
+          control.map((item) => {
+            this.controlDeviceService.update(item.id, { level: val });
+          });
+        }
         this.notificationService.create(
           {
             device_id,
-            content: `Độ ẩm trên ${large}%, nhiệt độ hiện tại ${temp}`,
+            content,
           },
-          'error',
-        );
-      } else if (medium < temp) {
-        this.notificationService.create(
-          {
-            device_id,
-            content: `Độ ẩm trên ${medium}%, nhiệt độ hiện tại ${temp}`,
-          },
-          'warning',
-        );
-      } else if (small < temp) {
-        this.notificationService.create(
-          {
-            device_id,
-            content: `Độ ẩm trên ${small}%, nhiệt độ hiện tại ${temp}`,
-          },
-          'info',
+          temp > upper ? 'error' : 'info',
         );
       }
       this.sensorDeviceService.update(device_id, { temp, humi });
