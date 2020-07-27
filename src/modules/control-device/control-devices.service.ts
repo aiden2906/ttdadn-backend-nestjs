@@ -119,10 +119,10 @@ export class ControlDeviceService {
   private async updateSetting(setting: Setting) {
     const ref = firebase.app().database().ref();
     const setting_ref = ref.child('setting');
-    const { small, medium, large } = setting;
-    setting_ref.child('small').set(small);
-    setting_ref.child('medium').set(medium);
-    setting_ref.child('large').set(large);
+    const { upper, lower, val } = setting;
+    setting_ref.child('upper').set(upper);
+    setting_ref.child('lower').set(lower);
+    setting_ref.child('val').set(val);
     return setting;
   }
 

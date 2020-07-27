@@ -11,17 +11,17 @@ export class Setting {
   @ApiProperty()
   @IsDefined()
   @IsNumber()
-  small: number;
+  upper: number;
 
   @ApiProperty()
   @IsDefined()
   @IsNumber()
-  medium: number;
+  lower: number;
 
   @ApiProperty()
   @IsDefined()
   @IsNumber()
-  large: number;
+  val: number;
 }
 
 export class SettingDto {
