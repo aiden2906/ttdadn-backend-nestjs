@@ -62,38 +62,12 @@ export class AppController {
       const value_message = JSON.parse(message.toString());
       const { device_id, values } = value_message[0];
       const [temp, humi] = values;
-      const [upper, lower, val] = setting;
-      //TODO: setup control-device by temp
-      // if (large < temp) {
-      //   this.notificationService.create(
-      //     {
-      //       device_id,
-      //       content: `Độ ẩm trên ${large}%, nhiệt độ hiện tại ${temp}`,
-      //     },
-      //     'error',
-      //   );
-      // } else if (medium < temp) {
-      //   this.notificationService.create(
-      //     {
-      //       device_id,
-      //       content: `Độ ẩm trên ${medium}%, nhiệt độ hiện tại ${temp}`,
-      //     },
-      //     'warning',
-      //   );
-      // } else if (small < temp) {
-      //   this.notificationService.create(
-      //     {
-      //       device_id,
-      //       content: `Độ ẩm trên ${small}%, nhiệt độ hiện tại ${temp}`,
-      //     },
-      //     'info',
-      //   );
-      // }
-      if (temp < lower || temp > upper) {
+      const [lower, upper, val] = setting;
+      if (temp <= lower || temp >= upper) {
         const content =
           temp > upper
-            ? `Độ ẩm trên ${upper}%, nhiệt độ hiện tại ${temp}`
-            : `Độ ẩm dưới ${lower}%, nhiệt độ hiện tại ${temp}`;
+            ? `Nhiệt độ hiện tại ${temp}, cao hơn ${upper}`
+            : `Nhiệt độ hiện tại ${temp}, thấp hơn ${lower}`;
         if (control && control.length > 0) {
           control.map((item) => {
             this.controlDeviceService.update(item.id, { level: val });

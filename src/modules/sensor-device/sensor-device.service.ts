@@ -74,7 +74,7 @@ export class SensorDeviceService {
     }
     device.history[`${Date.now()}`] = { temp, humi };
     const key_history = Object.keys(device.history);
-    if (key_history.length > 100) {
+    if (key_history.length > 2000) {
       delete device.history[key_history[0]];
     }
     device_ref.child(path).set(device);
